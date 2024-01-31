@@ -50,8 +50,8 @@ public class IndexingServiceImpl implements IndexingService {
 
     //private final LocationIqClient locationIqClient;
 
-    @Value("${location.api.key}")
-    private String apiKey;
+   /* @Value("${location.api.key}")
+    private String apiKey;*/
 
 
     @Override
