@@ -1,6 +1,6 @@
 package com.example.ddmdemo.service.impl;
 
-import com.example.ddmdemo.dto.IndexUnitInfoDTO;
+import com.example.ddmdemo.dto.CreateIndexDTO;
 import com.example.ddmdemo.exceptionhandling.exception.LoadingException;
 import com.example.ddmdemo.exceptionhandling.exception.StorageException;
 import com.example.ddmdemo.indexmodel.DummyIndex;
@@ -14,9 +14,12 @@ import com.example.ddmdemo.respository.IndexUnitInfoRepository;
 import com.example.ddmdemo.service.interfaces.FileService;
 import com.example.ddmdemo.service.interfaces.IndexingService;
 import jakarta.transaction.Transactional;
+import org.springframework.data.elasticsearch.core.geo.GeoPoint;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -24,8 +27,10 @@ import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.text.PDFTextStripper;
 import org.apache.tika.Tika;
 import org.apache.tika.language.detect.LanguageDetector;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+
 
 @Service
 @RequiredArgsConstructor
@@ -42,6 +47,11 @@ public class IndexingServiceImpl implements IndexingService {
     private final FileService fileService;
 
     private final LanguageDetector languageDetector;
+
+    //private final LocationIqClient locationIqClient;
+
+    @Value("${location.api.key}")
+    private String apiKey;
 
 
     @Override
@@ -77,30 +87,33 @@ public class IndexingServiceImpl implements IndexingService {
 
     @Override
     @Transactional
-    public String createIndex(IndexUnitInfoDTO dto) {
+    public void createIndex(CreateIndexDTO indexingUnit) {
 
         IndexUnit newIndex = new IndexUnit();
-        newIndex.setServerFilename(fileService.store(dto.getContract(), UUID.randomUUID().toString()));
-        newIndex.setTitle(Objects.requireNonNull(dto.getContract().getOriginalFilename()).split("\\.")[0]);
-        newIndex.setContractContent(extractDocumentContent(dto.getContract()));
-        newIndex.setLawContent(extractDocumentContent(dto.getLaw()));
-        newIndex.setGovernmentName(dto.getGovernmentName());
-        newIndex.setGovernmentType(dto.getGovernmentType());
-        //newIndex.setLocation("adresa");
-        newIndex.setName(dto.getName());
-        newIndex.setSurname(dto.getName());
+        newIndex.setName(indexingUnit.getName());
+        newIndex.setSurname(indexingUnit.getSurname());
+        newIndex.setGovernmentName(indexingUnit.getGovernmentName());
+        newIndex.setGovernmentType(indexingUnit.getGovernmentType());
+        newIndex.setContractContent(extractDocumentContent(indexingUnit.getContract()));
+        newIndex.setLawContent(extractDocumentContent(indexingUnit.getLaw()));
+
+//        var location = locationIqClient.forwardGeolocation(apiKey, indexingUnit.getAddress(), "json").get(0);
+//        newIndex.setLocation(new GeoPoint(location.getLat(), location.getLon()));
+        indexUnitRepository.save(newIndex);
 
         IndexUnitInfo newEntity = new IndexUnitInfo();
-        newEntity.setDocTitle(Objects.requireNonNull(dto.getContract().getOriginalFilename()).split("\\.")[0]);
-        newEntity.setServerFilename(fileService.store(dto.getContract(), UUID.randomUUID().toString()));
-        newEntity.setMimeType(detectMimeType(dto.getContract()));
+        newEntity.setContractTitle(Objects.requireNonNull(indexingUnit.getContract().getOriginalFilename()).split("\\.")[0]);
+        newEntity.setLawTitle(Objects.requireNonNull(indexingUnit.getLaw().getOriginalFilename()).split("\\.")[0]);
+        newEntity.setServerContractFilename(fileService.store(indexingUnit.getContract(), UUID.randomUUID().toString()));
+        newEntity.setServerLawFilename(fileService.store(indexingUnit.getLaw(), UUID.randomUUID().toString()));
+        newEntity.setMimeType(detectMimeType(indexingUnit.getContract()));
+        newEntity.setGovernmentName(indexingUnit.getGovernmentName());
+        newEntity.setGovernmentType(indexingUnit.getGovernmentType());
+        newEntity.setName(indexingUnit.getName());
+        newEntity.setSurname(indexingUnit.getSurname());
+        newEntity.setLocation(indexingUnit.getAddress());
+        indexUnitInfoRepository.save(newEntity);
 
-        var savedEntity = indexUnitInfoRepository.save(newEntity);
-
-        newIndex.setDatabaseId(savedEntity.getId());
-        indexUnitRepository.save(newIndex);
-        System.out.println(newIndex);
-        return savedEntity.getServerFilename();
     }
 
     private String extractDocumentContent(MultipartFile multipartPdfFile) {

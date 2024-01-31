@@ -1,4 +1,4 @@
 package com.example.ddmdemo.dto;
 
-public record DummyDocumentFileResponseDTO(String serverFilename) {
+public record DummyDocumentFileResponseDTO(java.util.List<String> serverFilename) {
 }

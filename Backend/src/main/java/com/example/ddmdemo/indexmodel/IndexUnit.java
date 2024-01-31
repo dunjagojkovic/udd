@@ -19,9 +19,6 @@ public class IndexUnit {
     @Id
     private String id;
 
-    @Field(type = FieldType.Text, store = true, name = "title")
-    private String title;
-
     @Field(type = FieldType.Text, store = true, name = "name")
     private String name;
 
@@ -40,15 +37,10 @@ public class IndexUnit {
     @Field(type = FieldType.Text, store = true, name = "lawContent", analyzer = "serbian_simple", searchAnalyzer = "serbian_simple")
     private String lawContent;
 
-    @Field(type = FieldType.Text, store = true, name = "server_filename", index = false)
-    private String serverFilename;
-
     @GeoPointField
     @Field(store = true, name = "location")
     private GeoPoint location;
 
-    @Field(type = FieldType.Integer, store = true, name = "database_id")
-    private Integer databaseId;
 
 
 }

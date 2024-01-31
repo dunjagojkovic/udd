@@ -1,12 +1,15 @@
 package com.example.ddmdemo.controller;
 
+import com.example.ddmdemo.dto.CreateIndexDTO;
 import com.example.ddmdemo.dto.DummyDocumentFileDTO;
 import com.example.ddmdemo.dto.DummyDocumentFileResponseDTO;
-import com.example.ddmdemo.dto.IndexUnitInfoDTO;
 import com.example.ddmdemo.service.interfaces.IndexingService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.Collections;
 
 
 @RestController
@@ -20,20 +23,14 @@ public class IndexController {
     @ResponseStatus(HttpStatus.CREATED)
     public DummyDocumentFileResponseDTO addDocumentFile(
         @ModelAttribute DummyDocumentFileDTO documentFile) {
-        System.out.println("usao");
         var serverFilename = indexingService.indexDocument(documentFile.file());
-        System.out.println(serverFilename);
-        return new DummyDocumentFileResponseDTO(serverFilename);
-
+        return new DummyDocumentFileResponseDTO(Collections.singletonList(serverFilename.toString()));
     }
 
     @PostMapping(value = "/create")
     @ResponseStatus(HttpStatus.CREATED)
-    public DummyDocumentFileResponseDTO addDocument(@ModelAttribute  IndexUnitInfoDTO dto) {
-        System.out.println("usao");
-        var serverFilename = indexingService.createIndex(dto);
-        System.out.println(serverFilename);
-        return new DummyDocumentFileResponseDTO(serverFilename);
-
+    public void createIndex(@ModelAttribute CreateIndexDTO dto) {
+        indexingService.createIndex(dto);
     }
+
 }
