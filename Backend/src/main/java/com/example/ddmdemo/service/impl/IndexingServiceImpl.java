@@ -1,11 +1,16 @@
 package com.example.ddmdemo.service.impl;
 
+import com.example.ddmdemo.dto.IndexUnitInfoDTO;
 import com.example.ddmdemo.exceptionhandling.exception.LoadingException;
 import com.example.ddmdemo.exceptionhandling.exception.StorageException;
 import com.example.ddmdemo.indexmodel.DummyIndex;
+import com.example.ddmdemo.indexmodel.IndexUnit;
 import com.example.ddmdemo.indexrepository.DummyIndexRepository;
+import com.example.ddmdemo.indexrepository.IndexUnitRepository;
 import com.example.ddmdemo.model.DummyTable;
+import com.example.ddmdemo.model.IndexUnitInfo;
 import com.example.ddmdemo.respository.DummyRepository;
+import com.example.ddmdemo.respository.IndexUnitInfoRepository;
 import com.example.ddmdemo.service.interfaces.FileService;
 import com.example.ddmdemo.service.interfaces.IndexingService;
 import jakarta.transaction.Transactional;
@@ -29,6 +34,10 @@ public class IndexingServiceImpl implements IndexingService {
     private final DummyIndexRepository dummyIndexRepository;
 
     private final DummyRepository dummyRepository;
+
+    private final IndexUnitRepository indexUnitRepository;
+
+    private final IndexUnitInfoRepository indexUnitInfoRepository;
 
     private final FileService fileService;
 
@@ -64,6 +73,34 @@ public class IndexingServiceImpl implements IndexingService {
         dummyIndexRepository.save(newIndex);
 
         return serverFilename;
+    }
+
+    @Override
+    @Transactional
+    public String createIndex(IndexUnitInfoDTO dto) {
+
+        IndexUnit newIndex = new IndexUnit();
+        newIndex.setServerFilename(fileService.store(dto.getContract(), UUID.randomUUID().toString()));
+        newIndex.setTitle(Objects.requireNonNull(dto.getContract().getOriginalFilename()).split("\\.")[0]);
+        newIndex.setContractContent(extractDocumentContent(dto.getContract()));
+        newIndex.setLawContent(extractDocumentContent(dto.getLaw()));
+        newIndex.setGovernmentName(dto.getGovernmentName());
+        newIndex.setGovernmentType(dto.getGovernmentType());
+        //newIndex.setLocation("adresa");
+        newIndex.setName(dto.getName());
+        newIndex.setSurname(dto.getName());
+
+        IndexUnitInfo newEntity = new IndexUnitInfo();
+        newEntity.setDocTitle(Objects.requireNonNull(dto.getContract().getOriginalFilename()).split("\\.")[0]);
+        newEntity.setServerFilename(fileService.store(dto.getContract(), UUID.randomUUID().toString()));
+        newEntity.setMimeType(detectMimeType(dto.getContract()));
+
+        var savedEntity = indexUnitInfoRepository.save(newEntity);
+
+        newIndex.setDatabaseId(savedEntity.getId());
+        indexUnitRepository.save(newIndex);
+        System.out.println(newIndex);
+        return savedEntity.getServerFilename();
     }
 
     private String extractDocumentContent(MultipartFile multipartPdfFile) {
