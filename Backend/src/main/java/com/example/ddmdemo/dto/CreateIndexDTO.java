@@ -12,8 +12,6 @@ import org.springframework.web.multipart.MultipartFile;
 @Getter
 public class CreateIndexDTO {
 
-    private String name;
-    private String surname;
     private MultipartFile contract;
     private MultipartFile law;
 
