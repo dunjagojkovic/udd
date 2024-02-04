@@ -24,6 +24,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
 import lombok.RequiredArgsConstructor;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.text.PDFTextStripper;
@@ -97,7 +100,7 @@ public class IndexingServiceImpl implements IndexingService {
         newIndex.setSurname(indexingUnit.getSurname()); //treba da isparsira iz dokumenta
         newIndex.setGovernmentName(governmentInfo.getName());
         newIndex.setGovernmentType(governmentInfo.getType().toString());
-        newIndex.setContractContent(extractDocumentContent(indexingUnit.getContract()));
+        newIndex.setContractContent(extractContractContent(indexingUnit.getContract()));
         newIndex.setLawContent(extractDocumentContent(indexingUnit.getLaw()));
 //        var location = locationIqClient.forwardGeolocation(apiKey, indexingUnit.getAddress(), "json").get(0);
 //        newIndex.setLocation(new GeoPoint(location.getLat(), location.getLon()));
@@ -108,12 +111,29 @@ public class IndexingServiceImpl implements IndexingService {
 
     }
 
-    private String extractDocumentContent(MultipartFile multipartPdfFile) {
+    private String extractDocumentContent(MultipartFile multipartPdfFile) {  // full-text -> zakon
         String documentContent;
         try (var pdfFile = multipartPdfFile.getInputStream()) {
             var pdDocument = PDDocument.load(pdfFile);
             var textStripper = new PDFTextStripper();
             documentContent = textStripper.getText(pdDocument);
+            pdDocument.close();
+        } catch (IOException e) {
+            throw new LoadingException("Error while trying to load PDF file content.");
+        }
+
+        return documentContent;
+    }
+
+    private String extractContractContent(MultipartFile multipartPdfFile) {  // full-text -> zakon
+        String documentContent;
+        try (var pdfFile = multipartPdfFile.getInputStream()) {
+            var pdDocument = PDDocument.load(pdfFile);
+            var textStripper = new PDFTextStripper();
+            documentContent = textStripper.getText(pdDocument);
+            Stream.of(documentContent.split("\n"))
+                    .map(String::trim)
+                    .collect(Collectors.toList());
             pdDocument.close();
         } catch (IOException e) {
             throw new LoadingException("Error while trying to load PDF file content.");
