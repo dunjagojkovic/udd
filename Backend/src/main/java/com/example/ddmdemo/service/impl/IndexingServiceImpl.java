@@ -1,5 +1,6 @@
 package com.example.ddmdemo.service.impl;
 
+import com.example.ddmdemo.dto.ContractParsedDataDTO;
 import com.example.ddmdemo.dto.CreateIndexDTO;
 import com.example.ddmdemo.exceptionhandling.exception.LoadingException;
 import com.example.ddmdemo.exceptionhandling.exception.StorageException;
@@ -8,26 +9,26 @@ import com.example.ddmdemo.indexmodel.IndexUnit;
 import com.example.ddmdemo.indexrepository.DummyIndexRepository;
 import com.example.ddmdemo.indexrepository.IndexUnitRepository;
 import com.example.ddmdemo.model.DummyTable;
-import com.example.ddmdemo.model.IndexUnitInfo;
+import com.example.ddmdemo.model.GovernmentInfo;
 import com.example.ddmdemo.respository.DummyRepository;
-import com.example.ddmdemo.respository.IndexUnitInfoRepository;
+import com.example.ddmdemo.respository.GovernmentInfoRepository;
 import com.example.ddmdemo.service.interfaces.FileService;
 import com.example.ddmdemo.service.interfaces.IndexingService;
 import jakarta.transaction.Transactional;
-import org.springframework.data.elasticsearch.core.geo.GeoPoint;
+
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
 import lombok.RequiredArgsConstructor;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.text.PDFTextStripper;
 import org.apache.tika.Tika;
 import org.apache.tika.language.detect.LanguageDetector;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -42,8 +43,7 @@ public class IndexingServiceImpl implements IndexingService {
 
     private final IndexUnitRepository indexUnitRepository;
 
-    private final IndexUnitInfoRepository indexUnitInfoRepository;
-
+    private final GovernmentInfoRepository governmentInfoRepository;
     private final FileService fileService;
 
     private final LanguageDetector languageDetector;
@@ -90,33 +90,25 @@ public class IndexingServiceImpl implements IndexingService {
     public void createIndex(CreateIndexDTO indexingUnit) {
 
         IndexUnit newIndex = new IndexUnit();
-        newIndex.setName(indexingUnit.getName());
-        newIndex.setSurname(indexingUnit.getSurname());
-        newIndex.setGovernmentName(indexingUnit.getGovernmentName());
-        newIndex.setGovernmentType(indexingUnit.getGovernmentType());
-        newIndex.setContractContent(extractDocumentContent(indexingUnit.getContract()));
-        newIndex.setLawContent(extractDocumentContent(indexingUnit.getLaw()));
+        ContractParsedDataDTO data = parsePdf(indexingUnit.getContract());
 
-//        var location = locationIqClient.forwardGeolocation(apiKey, indexingUnit.getAddress(), "json").get(0);
-//        newIndex.setLocation(new GeoPoint(location.getLat(), location.getLon()));
+        newIndex.setName(data.getEmployeeFullName().split(" ")[0]);
+        newIndex.setSurname(data.getEmployeeFullName().split(" ")[1]);
+        newIndex.setGovernmentName(data.getGovernmentName());
+        newIndex.setGovernmentType(data.getGovernmentType());
+        newIndex.setContractContent(extractContractContent(indexingUnit.getContract()));
+        newIndex.setLawContent(extractDocumentContent(indexingUnit.getLaw()));
+//      var location = locationIqClient.forwardGeolocation(apiKey, indexingUnit.getAddress(), "json").get(0);
+//      newIndex.setLocation(new GeoPoint(location.getLat(), location.getLon()));
+
         indexUnitRepository.save(newIndex);
 
-        IndexUnitInfo newEntity = new IndexUnitInfo();
-        newEntity.setContractTitle(Objects.requireNonNull(indexingUnit.getContract().getOriginalFilename()).split("\\.")[0]);
-        newEntity.setLawTitle(Objects.requireNonNull(indexingUnit.getLaw().getOriginalFilename()).split("\\.")[0]);
-        newEntity.setServerContractFilename(fileService.store(indexingUnit.getContract(), UUID.randomUUID().toString()));
-        newEntity.setServerLawFilename(fileService.store(indexingUnit.getLaw(), UUID.randomUUID().toString()));
-        newEntity.setMimeType(detectMimeType(indexingUnit.getContract()));
-        newEntity.setGovernmentName(indexingUnit.getGovernmentName());
-        newEntity.setGovernmentType(indexingUnit.getGovernmentType());
-        newEntity.setName(indexingUnit.getName());
-        newEntity.setSurname(indexingUnit.getSurname());
-        newEntity.setLocation(indexingUnit.getAddress());
-        indexUnitInfoRepository.save(newEntity);
+        fileService.store(indexingUnit.getContract(), UUID.randomUUID().toString());
+        fileService.store(indexingUnit.getLaw(), UUID.randomUUID().toString());
 
     }
 
-    private String extractDocumentContent(MultipartFile multipartPdfFile) {
+    private String extractDocumentContent(MultipartFile multipartPdfFile) {  // full-text -> zakon
         String documentContent;
         try (var pdfFile = multipartPdfFile.getInputStream()) {
             var pdDocument = PDDocument.load(pdfFile);
@@ -128,6 +120,50 @@ public class IndexingServiceImpl implements IndexingService {
         }
 
         return documentContent;
+    }
+
+    private String extractContractContent(MultipartFile multipartPdfFile) {  // full-text -> zakon
+        String documentContent;
+        try (var pdfFile = multipartPdfFile.getInputStream()) {
+            var pdDocument = PDDocument.load(pdfFile);
+            var textStripper = new PDFTextStripper();
+            documentContent = textStripper.getText(pdDocument);
+            Stream.of(documentContent.split("\n"))
+                    .map(String::trim)
+                    .collect(Collectors.toList());
+            pdDocument.close();
+        } catch (IOException e) {
+            throw new LoadingException("Error while trying to load PDF file content.");
+        }
+
+        return documentContent;
+    }
+
+    private ContractParsedDataDTO parsePdf(MultipartFile multipartPdfFile) {
+        var parsed = new ContractParsedDataDTO();
+
+        String documentContent = extractDocumentContent((multipartPdfFile));
+        var dc1 = documentContent.replaceAll("\r", "");
+        var lines = dc1.split("\n");
+
+       for(int i = 0; i < lines.length; i++) {
+           if(lines[i].equals("Agencija za objavljivanje zakona ")) {
+               if(i + 4 < lines.length && lines[i + 4].contains("Uprava za:")){
+                    parsed.setGovernmentName(lines[i + 4].replace("Uprava za: ", "").trim());
+               }
+               if(i + 5 < lines.length && lines[i + 5].contains("Nivo Uprave:")){
+                   parsed.setGovernmentType(lines[i + 5].replace("Nivo Uprave: ", "").trim());
+               }
+               if(i + 6 < lines.length){
+                   parsed.setGovernmentAddress(lines[i + 6].trim());
+               }
+           }
+           if(i - 1 >= 0 && lines[i].equals("Potpisanik ugovora za agenciju ")){
+               parsed.setEmployeeFullName(lines[i - 1].trim());
+           }
+       }
+
+        return parsed;
     }
 
     private String detectLanguage(String text) {

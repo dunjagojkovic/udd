@@ -14,10 +14,7 @@ public class CreateIndexDTO {
 
     private String name;
     private String surname;
-    private String governmentName;
-    private String governmentType;
     private MultipartFile contract;
     private MultipartFile law;
-    private String address;
 
 }
