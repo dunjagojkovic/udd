@@ -2,6 +2,7 @@ package com.example.ddmdemo.controller;
 
 import com.example.ddmdemo.dto.SearchQueryDTO;
 import com.example.ddmdemo.indexmodel.DummyIndex;
+import com.example.ddmdemo.indexmodel.IndexUnit;
 import com.example.ddmdemo.service.interfaces.SearchService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -19,8 +20,8 @@ public class SearchController {
     private final SearchService searchService;
 
     @PostMapping("/simple")
-    public Page<DummyIndex> simpleSearch(@RequestBody SearchQueryDTO simpleSearchQuery,
-                                         Pageable pageable) {
+    public Page<IndexUnit> simpleSearch(@RequestBody SearchQueryDTO simpleSearchQuery,
+                                        Pageable pageable) {
         return searchService.simpleSearch(simpleSearchQuery.keywords(), pageable);
     }
 

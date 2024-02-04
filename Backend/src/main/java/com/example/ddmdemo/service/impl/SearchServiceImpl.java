@@ -4,6 +4,7 @@ import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import com.example.ddmdemo.exceptionhandling.exception.MalformedQueryException;
 import com.example.ddmdemo.indexmodel.DummyIndex;
+import com.example.ddmdemo.indexmodel.IndexUnit;
 import com.example.ddmdemo.service.interfaces.SearchService;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -23,13 +24,22 @@ public class SearchServiceImpl implements SearchService {
 
     private final ElasticsearchOperations elasticsearchTemplate;
 
-    @Override
+   /* @Override
     public Page<DummyIndex> simpleSearch(List<String> keywords, Pageable pageable) {
         var searchQueryBuilder =
             new NativeQueryBuilder().withQuery(buildSimpleSearchQuery(keywords))
                 .withPageable(pageable);
 
         return runQuery(searchQueryBuilder.build());
+    }*/
+
+    @Override
+    public Page<IndexUnit> simpleSearch(List<String> keywords, Pageable pageable) {
+        var searchQueryBuilder =
+                new NativeQueryBuilder().withQuery(buildSimpleSearchQuery(keywords))
+                        .withPageable(pageable);
+
+        return executeQuery(searchQueryBuilder.build());
     }
 
     @Override
@@ -50,10 +60,12 @@ public class SearchServiceImpl implements SearchService {
     private Query buildSimpleSearchQuery(List<String> tokens) {
         return BoolQuery.of(q -> q.must(mb -> mb.bool(b -> {
             tokens.forEach(token -> {
-                b.should(sb -> sb.match(
-                    m -> m.field("title").fuzziness(Fuzziness.ONE.asString()).query(token)));
-                b.should(sb -> sb.match(m -> m.field("content_sr").query(token)));
-                b.should(sb -> sb.match(m -> m.field("content_en").query(token)));
+                b.should(sb -> sb.match(m -> m.field("name").fuzziness(Fuzziness.ONE.asString()).query(token)));
+                b.should(sb -> sb.match(m -> m.field("surname").query(token)));
+                b.should(sb -> sb.match(m -> m.field("governmentName").query(token)));
+                b.should(sb -> sb.match(m -> m.field("governmentType").query(token)));
+                b.should(sb -> sb.match(m -> m.field("contractContent").query(token)));
+                b.should(sb -> sb.match(m -> m.field("lawContent").query(token)));
             });
             return b;
         })))._toQuery();
@@ -96,5 +108,15 @@ public class SearchServiceImpl implements SearchService {
         var searchHitsPaged = SearchHitSupport.searchPageFor(searchHits, searchQuery.getPageable());
 
         return (Page<DummyIndex>) SearchHitSupport.unwrapSearchHits(searchHitsPaged);
+    }
+
+    private Page<IndexUnit> executeQuery(NativeQuery searchQuery) {
+
+        var searchHits = elasticsearchTemplate.search(searchQuery, IndexUnit.class,
+                IndexCoordinates.of("contract_index"));
+
+        var searchHitsPaged = SearchHitSupport.searchPageFor(searchHits, searchQuery.getPageable());
+
+        return (Page<IndexUnit>) SearchHitSupport.unwrapSearchHits(searchHitsPaged);
     }
 }
