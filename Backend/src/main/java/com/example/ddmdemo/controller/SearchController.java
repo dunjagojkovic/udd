@@ -26,7 +26,7 @@ public class SearchController {
     }
 
     @PostMapping("/advanced")
-    public Page<DummyIndex> advancedSearch(@RequestBody SearchQueryDTO advancedSearchQuery,
+    public Page<IndexUnit> advancedSearch(@RequestBody SearchQueryDTO advancedSearchQuery,
                                            Pageable pageable) {
         return searchService.advancedSearch(advancedSearchQuery.keywords(), pageable);
     }

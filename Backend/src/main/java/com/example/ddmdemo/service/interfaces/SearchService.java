@@ -13,5 +13,5 @@ public interface SearchService {
 
     Page<IndexUnit> simpleSearch(List<String> keywords, Pageable pageable);
 
-    Page<DummyIndex> advancedSearch(List<String> expression, Pageable pageable);
+    Page<IndexUnit> advancedSearch(List<String> expression, Pageable pageable);
 }

@@ -24,15 +24,6 @@ public class SearchServiceImpl implements SearchService {
 
     private final ElasticsearchOperations elasticsearchTemplate;
 
-   /* @Override
-    public Page<DummyIndex> simpleSearch(List<String> keywords, Pageable pageable) {
-        var searchQueryBuilder =
-            new NativeQueryBuilder().withQuery(buildSimpleSearchQuery(keywords))
-                .withPageable(pageable);
-
-        return runQuery(searchQueryBuilder.build());
-    }*/
-
     @Override
     public Page<IndexUnit> simpleSearch(List<String> keywords, Pageable pageable) {
         var searchQueryBuilder =
@@ -43,7 +34,7 @@ public class SearchServiceImpl implements SearchService {
     }
 
     @Override
-    public Page<DummyIndex> advancedSearch(List<String> expression, Pageable pageable) {
+    public Page<IndexUnit> advancedSearch(List<String> expression, Pageable pageable) {
         if (expression.size() != 3) {
             throw new MalformedQueryException("Search query malformed.");
         }
@@ -54,7 +45,7 @@ public class SearchServiceImpl implements SearchService {
             new NativeQueryBuilder().withQuery(buildAdvancedSearchQuery(expression, operation))
                 .withPageable(pageable);
 
-        return runQuery(searchQueryBuilder.build());
+        return executeQuery(searchQueryBuilder.build());
     }
 
     private Query buildSimpleSearchQuery(List<String> tokens) {
@@ -98,16 +89,6 @@ public class SearchServiceImpl implements SearchService {
 
             return b;
         })))._toQuery();
-    }
-
-    private Page<DummyIndex> runQuery(NativeQuery searchQuery) {
-
-        var searchHits = elasticsearchTemplate.search(searchQuery, DummyIndex.class,
-            IndexCoordinates.of("dummy_index"));
-
-        var searchHitsPaged = SearchHitSupport.searchPageFor(searchHits, searchQuery.getPageable());
-
-        return (Page<DummyIndex>) SearchHitSupport.unwrapSearchHits(searchHitsPaged);
     }
 
     private Page<IndexUnit> executeQuery(NativeQuery searchQuery) {
