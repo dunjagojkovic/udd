@@ -8,8 +8,10 @@ import com.example.ddmdemo.indexmodel.IndexUnit;
 import com.example.ddmdemo.indexrepository.DummyIndexRepository;
 import com.example.ddmdemo.indexrepository.IndexUnitRepository;
 import com.example.ddmdemo.model.DummyTable;
+import com.example.ddmdemo.model.GovernmentInfo;
 import com.example.ddmdemo.model.IndexUnitInfo;
 import com.example.ddmdemo.respository.DummyRepository;
+import com.example.ddmdemo.respository.GovernmentInfoRepository;
 import com.example.ddmdemo.respository.IndexUnitInfoRepository;
 import com.example.ddmdemo.service.interfaces.FileService;
 import com.example.ddmdemo.service.interfaces.IndexingService;
@@ -42,8 +44,7 @@ public class IndexingServiceImpl implements IndexingService {
 
     private final IndexUnitRepository indexUnitRepository;
 
-    private final IndexUnitInfoRepository indexUnitInfoRepository;
-
+    private final GovernmentInfoRepository governmentInfoRepository;
     private final FileService fileService;
 
     private final LanguageDetector languageDetector;
@@ -87,32 +88,23 @@ public class IndexingServiceImpl implements IndexingService {
 
     @Override
     @Transactional
-    public void createIndex(CreateIndexDTO indexingUnit) {
+    public void createIndex(CreateIndexDTO indexingUnit, Integer governmentId) {
+
+        GovernmentInfo governmentInfo = governmentInfoRepository.findById(governmentId).get();
 
         IndexUnit newIndex = new IndexUnit();
-        newIndex.setName(indexingUnit.getName());
-        newIndex.setSurname(indexingUnit.getSurname());
-        newIndex.setGovernmentName(indexingUnit.getGovernmentName());
-        newIndex.setGovernmentType(indexingUnit.getGovernmentType());
+        newIndex.setName(indexingUnit.getName()); //treba da isparsira iz dokumenta
+        newIndex.setSurname(indexingUnit.getSurname()); //treba da isparsira iz dokumenta
+        newIndex.setGovernmentName(governmentInfo.getName());
+        newIndex.setGovernmentType(governmentInfo.getType().toString());
         newIndex.setContractContent(extractDocumentContent(indexingUnit.getContract()));
         newIndex.setLawContent(extractDocumentContent(indexingUnit.getLaw()));
-
 //        var location = locationIqClient.forwardGeolocation(apiKey, indexingUnit.getAddress(), "json").get(0);
 //        newIndex.setLocation(new GeoPoint(location.getLat(), location.getLon()));
         indexUnitRepository.save(newIndex);
 
-        IndexUnitInfo newEntity = new IndexUnitInfo();
-        newEntity.setContractTitle(Objects.requireNonNull(indexingUnit.getContract().getOriginalFilename()).split("\\.")[0]);
-        newEntity.setLawTitle(Objects.requireNonNull(indexingUnit.getLaw().getOriginalFilename()).split("\\.")[0]);
-        newEntity.setServerContractFilename(fileService.store(indexingUnit.getContract(), UUID.randomUUID().toString()));
-        newEntity.setServerLawFilename(fileService.store(indexingUnit.getLaw(), UUID.randomUUID().toString()));
-        newEntity.setMimeType(detectMimeType(indexingUnit.getContract()));
-        newEntity.setGovernmentName(indexingUnit.getGovernmentName());
-        newEntity.setGovernmentType(indexingUnit.getGovernmentType());
-        newEntity.setName(indexingUnit.getName());
-        newEntity.setSurname(indexingUnit.getSurname());
-        newEntity.setLocation(indexingUnit.getAddress());
-        indexUnitInfoRepository.save(newEntity);
+        fileService.store(indexingUnit.getContract(), UUID.randomUUID().toString());
+        fileService.store(indexingUnit.getLaw(), UUID.randomUUID().toString());
 
     }
 

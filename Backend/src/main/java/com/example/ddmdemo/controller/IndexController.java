@@ -27,10 +27,10 @@ public class IndexController {
         return new DummyDocumentFileResponseDTO(Collections.singletonList(serverFilename.toString()));
     }
 
-    @PostMapping(value = "/create")
+    @PostMapping(value = "/create/{governmentId}")
     @ResponseStatus(HttpStatus.CREATED)
-    public void createIndex(@ModelAttribute CreateIndexDTO dto) {
-        indexingService.createIndex(dto);
+    public void createIndex(@ModelAttribute CreateIndexDTO dto, @PathVariable Integer governmentId) {
+        indexingService.createIndex(dto, governmentId);
     }
 
 }
