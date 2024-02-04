@@ -9,6 +9,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.IOException;
 import java.util.Collections;
 
 
@@ -27,10 +28,10 @@ public class IndexController {
         return new DummyDocumentFileResponseDTO(Collections.singletonList(serverFilename.toString()));
     }
 
-    @PostMapping(value = "/create/{governmentId}")
+    @PostMapping(value = "/create")
     @ResponseStatus(HttpStatus.CREATED)
-    public void createIndex(@ModelAttribute CreateIndexDTO dto, @PathVariable Integer governmentId) {
-        indexingService.createIndex(dto, governmentId);
+    public void createIndex(@ModelAttribute CreateIndexDTO dto) throws IOException {
+        indexingService.createIndex(dto);
     }
 
 }

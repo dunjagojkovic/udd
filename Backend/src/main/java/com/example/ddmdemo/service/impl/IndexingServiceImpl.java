@@ -1,5 +1,6 @@
 package com.example.ddmdemo.service.impl;
 
+import com.example.ddmdemo.dto.ContractParsedDataDTO;
 import com.example.ddmdemo.dto.CreateIndexDTO;
 import com.example.ddmdemo.exceptionhandling.exception.LoadingException;
 import com.example.ddmdemo.exceptionhandling.exception.StorageException;
@@ -9,19 +10,15 @@ import com.example.ddmdemo.indexrepository.DummyIndexRepository;
 import com.example.ddmdemo.indexrepository.IndexUnitRepository;
 import com.example.ddmdemo.model.DummyTable;
 import com.example.ddmdemo.model.GovernmentInfo;
-import com.example.ddmdemo.model.IndexUnitInfo;
 import com.example.ddmdemo.respository.DummyRepository;
 import com.example.ddmdemo.respository.GovernmentInfoRepository;
-import com.example.ddmdemo.respository.IndexUnitInfoRepository;
 import com.example.ddmdemo.service.interfaces.FileService;
 import com.example.ddmdemo.service.interfaces.IndexingService;
 import jakarta.transaction.Transactional;
-import org.springframework.data.elasticsearch.core.geo.GeoPoint;
+
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -32,7 +29,6 @@ import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.text.PDFTextStripper;
 import org.apache.tika.Tika;
 import org.apache.tika.language.detect.LanguageDetector;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -91,19 +87,20 @@ public class IndexingServiceImpl implements IndexingService {
 
     @Override
     @Transactional
-    public void createIndex(CreateIndexDTO indexingUnit, Integer governmentId) {
-
-        GovernmentInfo governmentInfo = governmentInfoRepository.findById(governmentId).get();
+    public void createIndex(CreateIndexDTO indexingUnit) {
 
         IndexUnit newIndex = new IndexUnit();
-        newIndex.setName(indexingUnit.getName()); //treba da isparsira iz dokumenta
-        newIndex.setSurname(indexingUnit.getSurname()); //treba da isparsira iz dokumenta
-        newIndex.setGovernmentName(governmentInfo.getName());
-        newIndex.setGovernmentType(governmentInfo.getType().toString());
+        ContractParsedDataDTO data = parsePdf(indexingUnit.getContract());
+
+        newIndex.setName(data.getEmployeeFullName().split(" ")[0]);
+        newIndex.setSurname(data.getEmployeeFullName().split(" ")[1]);
+        newIndex.setGovernmentName(data.getGovernmentName());
+        newIndex.setGovernmentType(data.getGovernmentType());
         newIndex.setContractContent(extractContractContent(indexingUnit.getContract()));
         newIndex.setLawContent(extractDocumentContent(indexingUnit.getLaw()));
-//        var location = locationIqClient.forwardGeolocation(apiKey, indexingUnit.getAddress(), "json").get(0);
-//        newIndex.setLocation(new GeoPoint(location.getLat(), location.getLon()));
+//      var location = locationIqClient.forwardGeolocation(apiKey, indexingUnit.getAddress(), "json").get(0);
+//      newIndex.setLocation(new GeoPoint(location.getLat(), location.getLon()));
+
         indexUnitRepository.save(newIndex);
 
         fileService.store(indexingUnit.getContract(), UUID.randomUUID().toString());
@@ -140,6 +137,33 @@ public class IndexingServiceImpl implements IndexingService {
         }
 
         return documentContent;
+    }
+
+    private ContractParsedDataDTO parsePdf(MultipartFile multipartPdfFile) {
+        var parsed = new ContractParsedDataDTO();
+
+        String documentContent = extractDocumentContent((multipartPdfFile));
+        var dc1 = documentContent.replaceAll("\r", "");
+        var lines = dc1.split("\n");
+
+       for(int i = 0; i < lines.length; i++) {
+           if(lines[i].equals("Agencija za objavljivanje zakona ")) {
+               if(i + 4 < lines.length && lines[i + 4].contains("Uprava za:")){
+                    parsed.setGovernmentName(lines[i + 4].replace("Uprava za: ", "").trim());
+               }
+               if(i + 5 < lines.length && lines[i + 5].contains("Nivo Uprave:")){
+                   parsed.setGovernmentType(lines[i + 5].replace("Nivo Uprave: ", "").trim());
+               }
+               if(i + 6 < lines.length){
+                   parsed.setGovernmentAddress(lines[i + 6].trim());
+               }
+           }
+           if(i - 1 >= 0 && lines[i].equals("Potpisanik ugovora za agenciju ")){
+               parsed.setEmployeeFullName(lines[i - 1].trim());
+           }
+       }
+
+        return parsed;
     }
 
     private String detectLanguage(String text) {

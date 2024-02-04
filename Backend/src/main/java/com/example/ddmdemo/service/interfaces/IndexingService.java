@@ -12,6 +12,6 @@ public interface IndexingService {
 
     String indexDocument(MultipartFile documentFile);
 
-    void createIndex(CreateIndexDTO dto, Integer governmentId);
+    void createIndex(CreateIndexDTO dto);
 
 }
