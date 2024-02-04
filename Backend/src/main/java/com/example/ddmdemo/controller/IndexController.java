@@ -16,6 +16,7 @@ import java.util.Collections;
 @RestController
 @RequestMapping("/api/index")
 @RequiredArgsConstructor
+@CrossOrigin
 public class IndexController {
 
     private final IndexingService indexingService;
