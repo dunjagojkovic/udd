@@ -1,17 +1,16 @@
 package com.example.ddmdemo.service.interfaces;
 
-import com.example.ddmdemo.indexmodel.DummyIndex;
+import com.example.ddmdemo.dto.HighlitedSearchResponseDTO;
+
 import java.util.List;
 
-import com.example.ddmdemo.indexmodel.IndexUnit;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 @Service
 public interface SearchService {
 
-    Page<IndexUnit> simpleSearch(List<String> keywords, Pageable pageable);
+    List<HighlitedSearchResponseDTO> simpleSearch(List<String> keywords, Pageable pageable);
 
-    Page<IndexUnit> advancedSearch(List<String> expression, Pageable pageable);
+    List<HighlitedSearchResponseDTO> advancedSearch(List<String> expression, Pageable pageable);
 }

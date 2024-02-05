@@ -1,20 +1,32 @@
 {
-  "analysis": {
-    "analyzer": {
-      "serbian_simple": {
-        "type": "custom",
-        "tokenizer": "standard",
-        "filter": [
-          "serbian_cyrillic_to_latinic",
-          "icu_folding",
-          "lowercase"
-        ]
-      }
-    },
-    "filter": {
-      "serbian_cyrillic_to_latinic": {
-        "type": "icu_transform",
-        "id": "Any-Latin; NFD; [:Nonspacing Mark:] Remove; NFC"
+  "settings": {
+    "analysis": {
+      "analyzer": {
+        "serbian_simple": {
+          "type": "custom",
+          "tokenizer": "icu_tokenizer",
+          "filter": [
+            "serbian_cyrillic_to_latinic",
+            "icu_folding",
+            "lowercase",
+            "serbian_stop",
+            "serbian_stemmer"
+          ]
+        }
+      },
+      "filter": {
+        "serbian_stop": {
+          "type": "stop",
+          "stopwords": "_serbian_"
+        },
+        "serbian_stemmer": {
+          "type": "stemmer",
+          "language": "serbian"
+        },
+        "serbian_cyrillic_to_latinic": {
+          "type": "icu_transform",
+          "id": "Any-Latin; NFD; [:Nonspacing Mark:] Remove; NFC"
+        }
       }
     }
   }

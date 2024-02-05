@@ -2,10 +2,6 @@ package com.example.ddmdemo.model;
 
 import jakarta.persistence.*;
 import lombok.*;
-import org.apache.lucene.spatial3d.geom.GeoPoint;
-import org.springframework.data.elasticsearch.annotations.Field;
-import org.springframework.data.elasticsearch.annotations.FieldType;
-import org.springframework.data.elasticsearch.annotations.GeoPointField;
 
 @Getter
 @Setter

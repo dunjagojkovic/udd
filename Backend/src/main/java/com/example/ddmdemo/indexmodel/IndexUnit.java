@@ -5,8 +5,8 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.apache.lucene.spatial3d.geom.GeoPoint;
 import org.springframework.data.elasticsearch.annotations.*;
+import org.springframework.data.elasticsearch.core.geo.GeoPoint;
 
 @Getter
 @Setter
@@ -32,9 +32,11 @@ public class IndexUnit {
     private String governmentType;
 
     @Field(type = FieldType.Text, store = true, name = "contractContent", analyzer = "serbian_simple", searchAnalyzer = "serbian_simple")
+    @HighlightField(name = "contractContent")
     private String contractContent;
 
     @Field(type = FieldType.Text, store = true, name = "lawContent", analyzer = "serbian_simple", searchAnalyzer = "serbian_simple")
+    @HighlightField
     private String lawContent;
 
     @GeoPointField
