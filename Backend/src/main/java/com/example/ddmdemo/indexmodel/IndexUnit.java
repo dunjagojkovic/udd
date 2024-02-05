@@ -19,16 +19,16 @@ public class IndexUnit {
     @Id
     private String id;
 
-    @Field(type = FieldType.Text, store = true, name = "name")
+    @Field(type = FieldType.Text, store = true, name = "name", analyzer = "serbian_simple", searchAnalyzer = "serbian_simple")
     private String name;
 
-    @Field(type = FieldType.Text, store = true, name = "surname")
+    @Field(type = FieldType.Text, store = true, name = "surname", analyzer = "serbian_simple", searchAnalyzer = "serbian_simple")
     private String surname;
 
-    @Field(type = FieldType.Text, store = true, name = "governmentName")
+    @Field(type = FieldType.Text, store = true, name = "governmentName", analyzer = "serbian_simple", searchAnalyzer = "serbian_simple")
     private String governmentName;
 
-    @Field(type = FieldType.Text, store = true, name = "governmentType")
+    @Field(type = FieldType.Text, store = true, name = "governmentType", analyzer = "serbian_simple", searchAnalyzer = "serbian_simple")
     private String governmentType;
 
     @Field(type = FieldType.Text, store = true, name = "contractContent", analyzer = "serbian_simple", searchAnalyzer = "serbian_simple")
@@ -46,6 +46,8 @@ public class IndexUnit {
     @GeoPointField
     @Field(store = true, name = "location")
     private GeoPoint location;
+
+    private String highlight;
 
 
 
