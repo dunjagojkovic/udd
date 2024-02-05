@@ -37,6 +37,12 @@ public class IndexUnit {
     @Field(type = FieldType.Text, store = true, name = "lawContent", analyzer = "serbian_simple", searchAnalyzer = "serbian_simple")
     private String lawContent;
 
+    @Field(type = FieldType.Text, store = true, name = "contract_filename")
+    private String contractFilename;
+
+    @Field(type = FieldType.Text, store = true, name = "law_filename")
+    private String lawFilename;
+
     @GeoPointField
     @Field(store = true, name = "location")
     private GeoPoint location;

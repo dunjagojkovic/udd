@@ -5,6 +5,7 @@ import com.example.ddmdemo.indexmodel.DummyIndex;
 import com.example.ddmdemo.indexmodel.IndexUnit;
 import com.example.ddmdemo.service.interfaces.SearchService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.web.bind.annotation.*;
@@ -15,7 +16,8 @@ import org.springframework.web.bind.annotation.*;
 @CrossOrigin
 public class SearchController {
 
-    private final SearchService searchService;
+    @Autowired
+    private SearchService searchService;
 
     @PostMapping("/simple")
     public Page<IndexUnit> simpleSearch(@RequestBody SearchQueryDTO simpleSearchQuery,

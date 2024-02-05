@@ -100,12 +100,10 @@ public class IndexingServiceImpl implements IndexingService {
         newIndex.setLawContent(extractDocumentContent(indexingUnit.getLaw()));
 //      var location = locationIqClient.forwardGeolocation(apiKey, indexingUnit.getAddress(), "json").get(0);
 //      newIndex.setLocation(new GeoPoint(location.getLat(), location.getLon()));
+        newIndex.setContractFilename(fileService.store(indexingUnit.getContract(), UUID.randomUUID().toString()));
+        newIndex.setLawFilename(fileService.store(indexingUnit.getLaw(), UUID.randomUUID().toString()));
 
         indexUnitRepository.save(newIndex);
-
-        fileService.store(indexingUnit.getContract(), UUID.randomUUID().toString());
-        fileService.store(indexingUnit.getLaw(), UUID.randomUUID().toString());
-
     }
 
     private String extractDocumentContent(MultipartFile multipartPdfFile) {  // full-text -> zakon

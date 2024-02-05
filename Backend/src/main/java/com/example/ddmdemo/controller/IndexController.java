@@ -5,6 +5,7 @@ import com.example.ddmdemo.dto.DummyDocumentFileDTO;
 import com.example.ddmdemo.dto.DummyDocumentFileResponseDTO;
 import com.example.ddmdemo.service.interfaces.IndexingService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -19,12 +20,12 @@ import java.util.Collections;
 @CrossOrigin
 public class IndexController {
 
-    private final IndexingService indexingService;
+    @Autowired
+    private IndexingService indexingService;
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public DummyDocumentFileResponseDTO addDocumentFile(
-        @ModelAttribute DummyDocumentFileDTO documentFile) {
+    public DummyDocumentFileResponseDTO addDocumentFile(@ModelAttribute DummyDocumentFileDTO documentFile) {
         var serverFilename = indexingService.indexDocument(documentFile.file());
         return new DummyDocumentFileResponseDTO(Collections.singletonList(serverFilename.toString()));
     }
@@ -34,5 +35,4 @@ public class IndexController {
     public void createIndex(@ModelAttribute CreateIndexDTO dto) throws IOException {
         indexingService.createIndex(dto);
     }
-
 }
