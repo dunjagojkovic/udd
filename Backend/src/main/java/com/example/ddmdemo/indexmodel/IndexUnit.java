@@ -5,7 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.apache.lucene.spatial3d.geom.GeoPoint;
+import org.elasticsearch.common.geo.GeoPoint;
 import org.springframework.data.elasticsearch.annotations.*;
 
 import java.util.List;
@@ -45,15 +45,15 @@ public class IndexUnit {
     @Field(type = FieldType.Text, store = true, name = "law_filename")
     private String lawFilename;
 
+    @Field(type = FieldType.Text, store = true, name = "gov_address", analyzer = "serbian_simple", searchAnalyzer = "serbian_simple")
+    private String govAddress;
+
     @GeoPointField
     @Field(store = true, name = "location")
     private GeoPoint location;
 
     private String highlight;
 
-    public List<String> getFieldNames() {
-        return List.of("name", "surname", "governmentName", "governmentType",  "contractContent", "lawContent");
-    }
 
 
 

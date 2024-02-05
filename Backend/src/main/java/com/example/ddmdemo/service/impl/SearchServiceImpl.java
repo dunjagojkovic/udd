@@ -1,6 +1,10 @@
 package com.example.ddmdemo.service.impl;
 
+import co.elastic.clients.elasticsearch._types.GeoDistanceType;
+import co.elastic.clients.elasticsearch._types.GeoLocation;
+import co.elastic.clients.elasticsearch._types.LatLonGeoLocation;
 import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
+import co.elastic.clients.elasticsearch._types.query_dsl.GeoDistanceQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import com.example.ddmdemo.exceptionhandling.exception.MalformedQueryException;
 import com.example.ddmdemo.indexmodel.IndexUnit;
@@ -31,6 +35,8 @@ import java.util.stream.Stream;
 public class SearchServiceImpl implements SearchService {
 
     private final ElasticsearchOperations elasticsearchTemplate;
+
+    private final GeoServicempl geoService;
 
      @Override
     public Page<IndexUnit> simpleSearch(List<String> keywords, Pageable pageable) {
@@ -76,7 +82,32 @@ public class SearchServiceImpl implements SearchService {
 
     @Override
     public Page<IndexUnit> geoSearch(String address, String radius, Pageable pageable) {
-        return null;
+        var coords = geoService.extractCoordinates(address);
+
+        var v = new HighlightFieldParameters.HighlightFieldParametersBuilder().withMatchedFields("contractContent").withType("plain").withFragmentSize(500).withFragmentOffset(250).withPostTags("</b>").withPreTags("<b>");
+        var c = new HighlightParameters.HighlightParametersBuilder().withType("plain").withRequireFieldMatch(false).build();
+        var searchQueryBuilder =
+                new NativeQueryBuilder().withQuery(buildGeoQuery(coords, radius))
+                        .withHighlightQuery(new HighlightQuery(new Highlight(c, List.of(new HighlightField("contractContent", v.build()))), String.class))
+                        .withPageable(pageable);
+
+        return executeQuery(searchQueryBuilder.build());
+    }
+
+    private Query buildGeoQuery(List<Double> coords, String radius) {
+        var geoLoc = new GeoLocation.Builder()
+                .latlon(new LatLonGeoLocation.Builder()
+                        .lon(coords.get(0)).lat(coords.get(1))
+                        .build())
+                .build();
+
+        return GeoDistanceQuery.of(x -> {
+            x.field("location");
+            x.distance(radius + "km");
+            x.distanceType(GeoDistanceType.Plane);
+            x.location(geoLoc);
+            return x;
+        })._toQuery();
     }
 
     private Query buildSimpleSearchQuery(List<String> tokens) {
@@ -88,6 +119,7 @@ public class SearchServiceImpl implements SearchService {
                 b.should(sb -> sb.match(m -> m.field("governmentType").query(token)));
                 b.should(sb -> sb.match(m -> m.field("contractContent").query(token)));
                 b.should(sb -> sb.match(m -> m.field("lawContent").query(token)));
+                b.should(sb -> sb.match(m -> m.field("govAddress").query(token)));
             });
             return b;
         })))._toQuery();

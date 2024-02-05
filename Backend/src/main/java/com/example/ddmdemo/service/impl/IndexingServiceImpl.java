@@ -9,7 +9,6 @@ import com.example.ddmdemo.indexmodel.IndexUnit;
 import com.example.ddmdemo.indexrepository.DummyIndexRepository;
 import com.example.ddmdemo.indexrepository.IndexUnitRepository;
 import com.example.ddmdemo.model.DummyTable;
-import com.example.ddmdemo.model.GovernmentInfo;
 import com.example.ddmdemo.respository.DummyRepository;
 import com.example.ddmdemo.respository.GovernmentInfoRepository;
 import com.example.ddmdemo.service.interfaces.FileService;
@@ -29,6 +28,7 @@ import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.text.PDFTextStripper;
 import org.apache.tika.Tika;
 import org.apache.tika.language.detect.LanguageDetector;
+import org.elasticsearch.common.geo.GeoPoint;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -48,8 +48,8 @@ public class IndexingServiceImpl implements IndexingService {
 
     private final LanguageDetector languageDetector;
 
-    //private final LocationIqClient locationIqClient;
 
+    private final GeoServicempl geoService;
    /* @Value("${location.api.key}")
     private String apiKey;*/
 
@@ -98,8 +98,9 @@ public class IndexingServiceImpl implements IndexingService {
         newIndex.setGovernmentType(data.getGovernmentType());
         newIndex.setContractContent(extractContractContent(indexingUnit.getContract()));
         newIndex.setLawContent(extractDocumentContent(indexingUnit.getLaw()));
-//      var location = locationIqClient.forwardGeolocation(apiKey, indexingUnit.getAddress(), "json").get(0);
-//      newIndex.setLocation(new GeoPoint(location.getLat(), location.getLon()));
+        newIndex.setGovAddress(data.getGovernmentAddress());
+        var coords = geoService.extractCoordinates(newIndex.getGovAddress());
+        newIndex.setLocation(new GeoPoint(coords.get(1), coords.get(0)));
         newIndex.setContractFilename(fileService.store(indexingUnit.getContract(), UUID.randomUUID().toString()));
         newIndex.setLawFilename(fileService.store(indexingUnit.getLaw(), UUID.randomUUID().toString()));
 

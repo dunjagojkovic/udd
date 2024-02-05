@@ -1,8 +1,8 @@
 package com.example.ddmdemo.controller;
 
+import com.example.ddmdemo.dto.GeoLocSearchQueryDTO;
 import com.example.ddmdemo.dto.SearchPhraseQueryDTO;
 import com.example.ddmdemo.dto.SearchQueryDTO;
-import com.example.ddmdemo.indexmodel.DummyIndex;
 import com.example.ddmdemo.indexmodel.IndexUnit;
 import com.example.ddmdemo.service.interfaces.SearchService;
 import lombok.RequiredArgsConstructor;
@@ -36,5 +36,11 @@ public class SearchController {
     public Page<IndexUnit> phraseSearch(@RequestBody SearchPhraseQueryDTO phraseQuery,
                                            Pageable pageable) {
         return searchService.phraseSearch(phraseQuery.query(), pageable);
+    }
+
+    @PostMapping("/geo")
+    public Page<IndexUnit> geoSearch(@RequestBody GeoLocSearchQueryDTO query,
+                                      Pageable pageable) {
+        return searchService.geoSearch(query.address(), query.radius(), pageable);
     }
 }
