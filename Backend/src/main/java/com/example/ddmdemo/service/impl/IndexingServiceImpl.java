@@ -24,6 +24,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.text.PDFTextStripper;
 import org.apache.tika.Tika;
@@ -35,6 +36,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class IndexingServiceImpl implements IndexingService {
 
     private final DummyIndexRepository dummyIndexRepository;
@@ -105,6 +107,8 @@ public class IndexingServiceImpl implements IndexingService {
         newIndex.setLawFilename(fileService.store(indexingUnit.getLaw(), UUID.randomUUID().toString()));
 
         indexUnitRepository.save(newIndex);
+        writeLogs(newIndex);
+
     }
 
     private String extractDocumentContent(MultipartFile multipartPdfFile) {  // full-text -> zakon
@@ -193,5 +197,15 @@ public class IndexingServiceImpl implements IndexingService {
         }
 
         return trueMimeType;
+    }
+
+    private void writeLogs(IndexUnit newIndex) {
+        log.info("STATISTIC-LOG indexDocument -> employee : " + newIndex.getName().concat(" ").concat(newIndex.getSurname()));
+        log.info("STATISTIC-LOG indexDocument -> government : " + newIndex.getGovernmentName());
+        try {
+            log.info("STATISTIC-LOG indexDocument -> city :" + newIndex.getGovAddress().split(",")[2]);
+        } catch (IndexOutOfBoundsException e) {
+            e.printStackTrace();
+        }
     }
 }
