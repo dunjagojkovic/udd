@@ -8,6 +8,8 @@ import lombok.Setter;
 import org.apache.lucene.spatial3d.geom.GeoPoint;
 import org.springframework.data.elasticsearch.annotations.*;
 
+import java.util.List;
+
 @Getter
 @Setter
 @NoArgsConstructor
@@ -48,6 +50,10 @@ public class IndexUnit {
     private GeoPoint location;
 
     private String highlight;
+
+    public List<String> getFieldNames() {
+        return List.of("name", "surname", "governmentName", "governmentType",  "contractContent", "lawContent");
+    }
 
 
 

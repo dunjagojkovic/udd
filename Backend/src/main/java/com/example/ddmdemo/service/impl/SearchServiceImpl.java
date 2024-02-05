@@ -60,6 +60,25 @@ public class SearchServiceImpl implements SearchService {
         return executeQuery(searchQueryBuilder.build());
     }
 
+    @Override
+    public Page<IndexUnit> phraseSearch(String query, Pageable pageable) {
+
+        var v = new HighlightFieldParameters.HighlightFieldParametersBuilder().withMatchedFields("lawContent").withType("plain").withFragmentSize(500).withFragmentOffset(250).withPostTags("</b>").withPreTags("<b>");
+        var c = new HighlightParameters.HighlightParametersBuilder().withType("plain").withRequireFieldMatch(false).build();
+
+        var searchQueryBuilder =
+                new NativeQueryBuilder().withQuery(buildPhraseSearchQuery(query))
+                        .withHighlightQuery(new HighlightQuery(new Highlight(c, List.of(new HighlightField("lawContent", v.build()))), String.class))
+                        .withPageable(pageable);
+
+        return executeQuery(searchQueryBuilder.build());
+    }
+
+    @Override
+    public Page<IndexUnit> geoSearch(String address, String radius, Pageable pageable) {
+        return null;
+    }
+
     private Query buildSimpleSearchQuery(List<String> tokens) {
         return BoolQuery.of(q -> q.must(mb -> mb.bool(b -> {
             tokens.forEach(token -> {
@@ -99,6 +118,18 @@ public class SearchServiceImpl implements SearchService {
                     break;
             }
 
+            return b;
+        })))._toQuery();
+    }
+
+    private Query buildPhraseSearchQuery(String query) {
+        return BoolQuery.of(q -> q.must(mb -> mb.bool(b -> {
+            b.should(sb -> sb.matchPhrase(m -> m.field("name").query(query).slop(1)));
+            b.should(sb -> sb.matchPhrase(m -> m.field("surname").query(query).slop(1)));
+            b.should(sb -> sb.matchPhrase(m -> m.field("governmentName").query(query).slop(1)));
+            b.should(sb -> sb.matchPhrase(m -> m.field("governmentType").query(query).slop(1)));
+            b.should(sb -> sb.matchPhrase(m -> m.field("contractContent").query(query).slop(1)));
+            b.should(sb -> sb.matchPhrase(m -> m.field("lawContent").query(query).slop(1)));
             return b;
         })))._toQuery();
     }

@@ -1,5 +1,6 @@
 package com.example.ddmdemo.controller;
 
+import com.example.ddmdemo.dto.SearchPhraseQueryDTO;
 import com.example.ddmdemo.dto.SearchQueryDTO;
 import com.example.ddmdemo.indexmodel.DummyIndex;
 import com.example.ddmdemo.indexmodel.IndexUnit;
@@ -29,5 +30,11 @@ public class SearchController {
     public Page<IndexUnit> advancedSearch(@RequestBody SearchQueryDTO advancedSearchQuery,
                                            Pageable pageable) {
         return searchService.advancedSearch(advancedSearchQuery.keywords(), pageable);
+    }
+
+    @PostMapping("/phrase")
+    public Page<IndexUnit> phraseSearch(@RequestBody SearchPhraseQueryDTO phraseQuery,
+                                           Pageable pageable) {
+        return searchService.phraseSearch(phraseQuery.query(), pageable);
     }
 }

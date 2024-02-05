@@ -14,4 +14,8 @@ public interface SearchService {
     Page<IndexUnit> simpleSearch(List<String> keywords, Pageable pageable);
 
     Page<IndexUnit> advancedSearch(List<String> expression, Pageable pageable);
+
+    Page<IndexUnit> phraseSearch(String query, Pageable pageable);
+
+    Page<IndexUnit> geoSearch(String address, String radius, Pageable pageable);
 }
